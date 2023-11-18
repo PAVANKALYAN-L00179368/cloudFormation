@@ -30,7 +30,7 @@
         "EnableDnsHostnames": true
       }
     },
-    "PublicSubnet1": {
+    "Public-Subnet-1b": {
       "Type": "AWS::EC2::Subnet",
       "Properties": {
         "VpcId": { "Ref": "MyVPC" },
@@ -38,7 +38,7 @@
         "AvailabilityZone": "us-east-1a"
       }
     },
-    "PublicSubnet2": {
+    "Public-Subnet-1a-d": {
       "Type": "AWS::EC2::Subnet",
       "Properties": {
         "VpcId": { "Ref": "MyVPC" },
@@ -46,7 +46,7 @@
         "AvailabilityZone": "us-east-1b"
       }
     },
-    "PrivateSubnet1": {
+    "Private-Subnet-1a": {
       "Type": "AWS::EC2::Subnet",
       "Properties": {
         "VpcId": { "Ref": "MyVPC" },
@@ -54,7 +54,7 @@
         "AvailabilityZone": "us-east-1a"
       }
     },
-    "PrivateSubnet2": {
+    "Private-Subnet-1b": {
       "Type": "AWS::EC2::Subnet",
       "Properties": {
         "VpcId": { "Ref": "MyVPC" },
