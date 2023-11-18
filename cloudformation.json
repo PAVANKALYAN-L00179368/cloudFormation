@@ -1,0 +1,172 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "Name of an existing EC2 KeyPair",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair"
+    },
+    "AMIId": {
+      "Type": "AWS::EC2::Image::Id",
+      "Description": "ID of the AMI for the EC2 instance"
+    },
+    "InstanceType": {
+      "Type": "String",
+      "Description": "EC2 instance type",
+      "Default": "t2.micro"
+    },
+    "DBInstanceClass": {
+      "Type": "String",
+      "Description": "RDS instance class",
+      "Default": "db.t2.large"
+    }
+  },
+  "Resources": {
+    "MyVPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsSupport": true,
+        "EnableDnsHostnames": true
+      }
+    },
+    "PublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" },
+        "CidrBlock": "10.0.1.0/24",
+        "AvailabilityZone": "us-east-1a"
+      }
+    },
+    "PublicSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" },
+        "CidrBlock": "10.0.2.0/24",
+        "AvailabilityZone": "us-east-1b"
+      }
+    },
+    "PrivateSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" },
+        "CidrBlock": "10.0.3.0/24",
+        "AvailabilityZone": "us-east-1a"
+      }
+    },
+    "PrivateSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" },
+        "CidrBlock": "10.0.4.0/24",
+        "AvailabilityZone": "us-east-1b"
+      }
+    },
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway"
+    },
+    "AttachGateway": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" },
+        "InternetGatewayId": { "Ref": "InternetGateway" }
+      }
+    },
+    "RouteTablePublic1": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" }
+      }
+    },
+    "RouteTablePublic2": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" }
+      }
+    },
+    "RouteTablePrivate1": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" }
+      }
+    },
+    "RouteTablePrivate2": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" }
+      }
+    },
+    "EC2InstanceJumpBox": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": { "Ref": "AMIId" },
+        "InstanceType": { "Ref": "InstanceType" },
+        "KeyName": { "Ref": "KeyName" },
+        "SubnetId": { "Ref": "PublicSubnet1" }
+      }
+    },
+    "SecurityGroupJumpBox": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Enable SSH access via port 22",
+        "VpcId": { "Ref": "MyVPC" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "5432",
+            "CidrIp": "10.105.7.149/32"
+          }
+        ]
+      }
+    },
+    "RDSSecurityGroup": {
+      "Type": "AWS::RDS::DBSecurityGroup",
+      "Properties": {
+        "EC2VpcId": { "Ref": "MyVPC" },
+        "DBSecurityGroupIngress": [
+          {
+            "EC2SecurityGroupName": {
+              "Fn::GetAtt": ["SecurityGroupJumpBox", "GroupId"]
+            }
+          }
+        ],
+        "GroupDescription": "Frontend Access"
+      }
+    },
+    "RDSDatabase": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "AllocatedStorage": "20",
+        "DBInstanceIdentifier": "mydbinstance",
+        "Engine": "postgres",
+        "MasterUsername": "masteruser",
+        "MasterUserPassword": "masterpassword",
+        "VPCSecurityGroups": [{ "Ref": "RDSSecurityGroup" }],
+        "DBSubnetGroupName": { "Ref": "PrivateSubnet1" }
+      }
+    }
+  },
+  "Outputs": {
+    "VPCId": {
+      "Value": { "Ref": "MyVPC" },
+      "Description": "VPC ID"
+    },
+    "PublicSubnet1Id": {
+      "Value": { "Ref": "PublicSubnet1" },
+      "Description": "ID of Public Subnet 1"
+    },
+    "PublicSubnet2Id": {
+      "Value": { "Ref": "PublicSubnet2" },
+      "Description": "ID of Public Subnet 2"
+    },
+    "PrivateSubnet1Id": {
+      "Value": { "Ref": "PrivateSubnet1" },
+      "Description": "ID of Private Subnet 1"
+    },
+    "PrivateSubnet2Id": {
+      "Value": { "Ref": "PrivateSubnet2" },
+      "Description": "ID of Private Subnet 2"
+    }
+  }
+}
